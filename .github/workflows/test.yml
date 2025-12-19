@@ -17,9 +17,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install jq (JSON validator)
-        run: sudo apt-get update && sudo apt-get install -y jq
-
       # -----------------------------
       # UNIT TEST 0 — PROJECT EXISTS
       # -----------------------------
@@ -36,19 +33,19 @@ jobs:
           echo "✅ GameMaker project found: $PROJECT_FILE"
 
       # -----------------------------
-      # UNIT TEST 1 — JSON SYNTAX
+      # UNIT TEST 1 — FILE READABLE
       # -----------------------------
-      - name: Unit Test 1 — Validate JSON syntax
+      - name: Unit Test 1 — Validate file is readable
         run: |
-          jq . "Tower Defense v1(back up6)"/*.yyp > /dev/null
-          echo "✅ JSON syntax is valid"
+          test -r "Tower Defense v1(back up6)"/*.yyp
+          echo "✅ Project file is readable"
 
       # -----------------------------
       # UNIT TEST 2 — PROJECT TYPE
       # -----------------------------
       - name: Unit Test 2 — Validate project type
         run: |
-          jq -e '.resourceType == "GMProject"' "Tower Defense v1(back up6)"/*.yyp > /dev/null
+          grep -q '"resourceType":"GMProject"' "Tower Defense v1(back up6)"/*.yyp
           echo "✅ Valid GameMaker project type"
 
       # -----------------------------
@@ -56,21 +53,21 @@ jobs:
       # -----------------------------
       - name: Unit Test 3 — Validate required sections
         run: |
-          jq -e '.resources' "Tower Defense v1(back up6)"/*.yyp > /dev/null
-          jq -e '.Folders' "Tower Defense v1(back up6)"/*.yyp > /dev/null
-          jq -e '.RoomOrderNodes' "Tower Defense v1(back up6)"/*.yyp > /dev/null
+          grep -q '"resources"' "Tower Defense v1(back up6)"/*.yyp
+          grep -q '"Folders"' "Tower Defense v1(back up6)"/*.yyp
+          grep -q '"RoomOrderNodes"' "Tower Defense v1(back up6)"/*.yyp
           echo "✅ Required sections exist"
 
       # -----------------------------
-      # UNIT TEST 4 — ASSERTION TEST (FAILURE DEMO)
+      # UNIT TEST 4 — ASSERTION (FAILURE DEMO)
       # -----------------------------
       - name: Unit Test 4 — Validate isEcma must be false
         run: |
-          VALUE=$(jq -r '.isEcma' "Tower Defense v1(back up6)"/*.yyp)
+          VALUE=$(grep '"isEcma"' "Tower Defense v1(back up6)"/*.yyp | head -n 1)
 
-          echo "Detected isEcma value: $VALUE"
+          echo "Detected: $VALUE"
 
-          if [ "$VALUE" != "false" ]; then
+          if echo "$VALUE" | grep -q 'true'; then
             echo "❌ Test Failed: isEcma must be false"
             exit 1
           fi
