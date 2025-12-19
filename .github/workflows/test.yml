@@ -1,0 +1,53 @@
+name: Unit Tests – GameMaker Project
+
+on:
+  push:
+    branches: [cicd]
+  pull_request:
+    branches: [cicd]
+
+jobs:
+  validate-project:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Locate GameMaker project file
+        run: |
+          PROJECT="Tower Defense v1(back up6)"
+          PROJECT_FILE=$(ls "$PROJECT"/*.yyp 2>/dev/null || true)
+
+          if [ -z "$PROJECT_FILE" ]; then
+            echo "❌ No GameMaker (.yyp) project found"
+            exit 1
+          fi
+
+          echo "✅ Found project file: $PROJECT_FILE"
+
+      - name: Validate JSON syntax
+        run: |
+          jq . "Tower Defense v1(back up6)"/*.yyp > /dev/null
+          echo "✅ Valid JSON structure"
+
+      - name: Validate required GameMaker keys
+        run: |
+          jq -e '.resources' "Tower Defense v1(back up6)"/*.yyp > /dev/null
+          jq -e '.Folders' "Tower Defense v1(back up6)"/*.yyp > /dev/null
+          jq -e '.RoomOrderNodes' "Tower Defense v1(back up6)"/*.yyp > /dev/null
+          echo "✅ Required project sections exist"
+
+      - name: Validate all resource paths exist
+        run: |
+          jq -r '.resources[].id.path' "Tower Defense v1(back up6)"/*.yyp | while read path; do
+            if [ ! -f "$path" ]; then
+              echo "❌ Missing resource file: $path"
+              exit 1
+            fi
+          done
+
+          echo "✅ All declared resources exist"
