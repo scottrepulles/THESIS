@@ -1,0 +1,23 @@
+{
+  "$GMPath":"",
+  "%Name":"pth_bronze_2",
+  "closed":false,
+  "kind":0,
+  "name":"pth_bronze_2",
+  "parent":{
+    "name":"path",
+    "path":"folders/-------------------rank---------------------/scott_b1/path.yy",
+  },
+  "points":[
+    {"speed":100.0,"x":1784.0,"y":749.0,},
+    {"speed":100.0,"x":1219.0,"y":746.0,},
+    {"speed":100.0,"x":1209.0,"y":368.0,},
+    {"speed":100.0,"x":787.0,"y":378.0,},
+    {"speed":100.0,"x":787.0,"y":709.0,},
+    {"speed":100.0,"x":714.0,"y":747.0,},
+    {"speed":100.0,"x":157.0,"y":747.0,},
+  ],
+  "precision":4,
+  "resourceType":"GMPath",
+  "resourceVersion":"2.0",
+}
