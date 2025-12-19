@@ -54,8 +54,13 @@ jobs:
       # -----------------------------
       - name: Unit Test 3 — Validate GameMaker project type
         run: |
-          jq -e '.resourceType == "GMProject"' "$PROJECT_FILE" > /dev/null
+          if ! grep -q '"resourceType":"GMProject"' "$PROJECT_FILE"; then
+            echo "❌ Invalid GameMaker project type"
+            exit 1
+          fi
+      
           echo "✅ Correct GameMaker project type"
+
 
       # -----------------------------
       # UNIT TEST 4 — REQUIRED ROOT KEYS
