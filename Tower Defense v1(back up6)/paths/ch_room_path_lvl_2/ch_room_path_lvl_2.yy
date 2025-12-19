@@ -1,0 +1,23 @@
+{
+  "$GMPath":"",
+  "%Name":"ch_room_path_lvl_2",
+  "closed":false,
+  "kind":0,
+  "name":"ch_room_path_lvl_2",
+  "parent":{
+    "name":"Challenge_Mode_Path",
+    "path":"folders/------------Overview---------------/Challenge_Mode_Path.yy",
+  },
+  "points":[
+    {"speed":100.0,"x":1664.0,"y":320.0,},
+    {"speed":100.0,"x":1440.0,"y":320.0,},
+    {"speed":100.0,"x":1440.0,"y":512.0,},
+    {"speed":100.0,"x":544.0,"y":512.0,},
+    {"speed":100.0,"x":544.02515,"y":637.8572,},
+    {"speed":100.0,"x":544.0,"y":768.0,},
+    {"speed":100.0,"x":224.0,"y":768.0,},
+  ],
+  "precision":4,
+  "resourceType":"GMPath",
+  "resourceVersion":"2.0",
+}

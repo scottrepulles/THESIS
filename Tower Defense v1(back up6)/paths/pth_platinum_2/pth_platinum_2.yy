@@ -1,0 +1,15 @@
+{
+  "$GMPath":"",
+  "%Name":"pth_platinum_2",
+  "closed":false,
+  "kind":0,
+  "name":"pth_platinum_2",
+  "parent":{
+    "name":"path",
+    "path":"folders/-------------------rank---------------------/scott_b1/path.yy",
+  },
+  "points":[],
+  "precision":4,
+  "resourceType":"GMPath",
+  "resourceVersion":"2.0",
+}

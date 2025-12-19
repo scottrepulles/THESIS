@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"scr_update_trophy_display",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"scr_update_trophy_display",
+  "parent":{
+    "name":"-------------------rank---------------------",
+    "path":"folders/-------------------rank---------------------.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

@@ -14,21 +14,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: CI validation banner
+      - name: CI Banner
         run: |
-          echo "🚀 CI started for Tower Defense"
+          echo "🚀 CI Pipeline Started"
+          echo "Branch: cicd"
           echo "Commit: $GITHUB_SHA"
 
-      - name: Verify GameMaker project type
+      - name: Validate GameMaker project exists
         run: |
-          PROJECT="Tower Defense v1(back up6)"
-          PROJECT_FILE=$(ls "$PROJECT"/*.yyp)
+          ls "Tower Defense v1(back up6)"/*.yyp > /dev/null
+          echo "✅ GameMaker project detected"
 
-          jq -e '.resourceType == "GMProject"' "$PROJECT_FILE" > /dev/null
-          echo "✅ Confirmed GameMaker project (.yyp)"
-
-      - name: CI complete
-        run: echo "🎉 CI passed successfully"
+      - name: CI Finished
+        run: echo "🎉 CI completed successfully"

@@ -1,0 +1,24 @@
+{
+  "$GMPath":"",
+  "%Name":"pth_silver",
+  "closed":false,
+  "kind":0,
+  "name":"pth_silver",
+  "parent":{
+    "name":"path",
+    "path":"folders/-------------------rank---------------------/scott_b1/path.yy",
+  },
+  "points":[
+    {"speed":100.0,"x":1788.0,"y":500.0,},
+    {"speed":100.0,"x":178.0,"y":514.0,},
+    {"speed":100.0,"x":179.0,"y":917.0,},
+    {"speed":100.0,"x":1119.0,"y":923.0,},
+    {"speed":100.0,"x":1112.0792,"y":761.1161,},
+    {"speed":100.0,"x":1581.3546,"y":758.8988,},
+    {"speed":100.0,"x":1588.0938,"y":930.4205,},
+    {"speed":100.0,"x":1578.543,"y":929.11615,},
+  ],
+  "precision":4,
+  "resourceType":"GMPath",
+  "resourceVersion":"2.0",
+}
