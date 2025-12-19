@@ -95,7 +95,7 @@
   ],
   "ForcedPrefabProjectReferences":[],
   "IncludedFiles":[],
-  "isEcma":true, // this intentional failures
+  "isEcma":false,
   "LibraryEmitters":[],
   "MetaData":{
     "IDEVersion":"2024.14.1.210",
