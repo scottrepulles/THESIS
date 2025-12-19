@@ -117,13 +117,26 @@ jobs:
           done
 
     # ==================================================
-    # UNIT TEST 11 — No duplicate resource paths
+    # UNIT TEST 11 — No duplicate resource IDs (GameMaker-correct)
     # ==================================================
-    - name: Unit Test 11 — No duplicate resource paths
+    - name: Unit Test 11 — No duplicate resource IDs
       run: |
         set -e
-        DUPES=$(grep '"path":"' "$PROJECT_FILE" | sed 's/.*"path":"//' | sed 's/".*//' | sort | uniq -d)
-        test -z "$DUPES"
+    
+        grep '"id":{' "$PROJECT_FILE" \
+        | sed -E 's/.*"name":"([^"]+)".*"path":"([^"]+)".*/\1|\2/' \
+        | sort \
+        | uniq -d \
+        | tee /tmp/duplicates.txt
+    
+        if [ -s /tmp/duplicates.txt ]; then
+          echo "❌ Duplicate resource IDs found:"
+          cat /tmp/duplicates.txt
+          exit 1
+        fi
+    
+        echo "✅ No duplicate resource IDs"
+
 
     # ==================================================
     # UNIT TEST 12 — RoomOrderNodes valid
