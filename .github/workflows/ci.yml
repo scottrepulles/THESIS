@@ -1,0 +1,32 @@
+name: CI – Tower Defense
+
+on:
+  push:
+    branches: [cicd]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: CI validation banner
+        run: |
+          echo "🚀 CI started for Tower Defense"
+          echo "Commit: $GITHUB_SHA"
+
+      - name: Verify GameMaker project type
+        run: |
+          PROJECT="Tower Defense v1(back up6)"
+          PROJECT_FILE=$(ls "$PROJECT"/*.yyp)
+
+          jq -e '.resourceType == "GMProject"' "$PROJECT_FILE" > /dev/null
+          echo "✅ Confirmed GameMaker project (.yyp)"
+
+      - name: CI complete
+        run: echo "🎉 CI passed successfully"
