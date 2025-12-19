@@ -3,6 +3,8 @@ name: CI – Tower Defense
 on:
   push:
     branches: [cicd]
+  pull_request:
+    branches: [cicd]
 
 jobs:
   ci:
