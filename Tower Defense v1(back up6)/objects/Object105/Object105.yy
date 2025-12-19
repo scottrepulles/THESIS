@@ -2,7 +2,7 @@
   "$GMObject":"",
   "%Name":"Object105",
   "eventList":[],
-  "managed":true,
+  "managed":false, // this is "true"
   "name":"Object105",
   "overriddenProperties":[],
   "parent":{
