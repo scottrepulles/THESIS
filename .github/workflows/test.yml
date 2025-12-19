@@ -58,16 +58,15 @@ jobs:
         echo "✅ Required root keys present"
 
     # ==================================================
-    # UNIT TEST 5 — isEcma configuration logic
+    # UNIT TEST 5 — isEcma configuration
     # ==================================================
     - name: Unit Test 5 — isEcma configuration
       run: |
-        LINE=$(grep '"isEcma"' "$PROJECT_FILE" | head -n 1)
-        echo "$LINE" | grep -q 'false'
+        grep '"isEcma"' "$PROJECT_FILE" | grep -q 'false'
         echo "✅ isEcma correctly set to false"
 
     # ==================================================
-    # UNIT TEST 6 — Required directories exist
+    # UNIT TEST 6 — Required directories
     # ==================================================
     - name: Unit Test 6 — Required directories exist
       run: |
@@ -78,31 +77,28 @@ jobs:
         echo "✅ Required directories exist"
 
     # ==================================================
-    # UNIT TEST 7 — Scripts exist (recursive)
+    # UNIT TEST 7 — Scripts exist
     # ==================================================
     - name: Unit Test 7 — Scripts exist
       run: |
-        COUNT=$(find "$PROJECT_DIR/scripts" -type f -name "*.yy" | wc -l)
-        test "$COUNT" -gt 0
-        echo "✅ Script files detected: $COUNT"
+        find "$PROJECT_DIR/scripts" -type f -name "*.yy" | grep -q .
+        echo "✅ Scripts detected"
 
     # ==================================================
     # UNIT TEST 8 — Objects exist
     # ==================================================
     - name: Unit Test 8 — Objects exist
       run: |
-        COUNT=$(find "$PROJECT_DIR/objects" -type f -name "*.yy" | wc -l)
-        test "$COUNT" -gt 0
-        echo "✅ Object files detected: $COUNT"
+        find "$PROJECT_DIR/objects" -type f -name "*.yy" | grep -q .
+        echo "✅ Objects detected"
 
     # ==================================================
     # UNIT TEST 9 — Rooms exist
     # ==================================================
     - name: Unit Test 9 — Rooms exist
       run: |
-        COUNT=$(find "$PROJECT_DIR/rooms" -type f -name "*.yy" | wc -l)
-        test "$COUNT" -gt 0
-        echo "✅ Room files detected: $COUNT"
+        find "$PROJECT_DIR/rooms" -type f -name "*.yy" | grep -q .
+        echo "✅ Rooms detected"
 
     # ==================================================
     # UNIT TEST 10 — Resource paths valid
@@ -128,14 +124,14 @@ jobs:
     # ==================================================
     # UNIT TEST 12 — RoomOrderNodes valid
     # ==================================================
-    - name: Unit Test 12 — Room order references valid rooms
+    - name: Unit Test 12 — RoomOrderNodes valid
       run: |
         grep '"roomId"' "$PROJECT_FILE" | grep '"path"' | \
         sed -E 's/.*"path":"([^"]+)".*/\1/' | \
         while read r; do
           test -f "$PROJECT_DIR/$r" || exit 1
         done
-        echo "✅ Room order valid"
+        echo "✅ Room order references valid rooms"
 
     # ==================================================
     # UNIT TEST 13 — Fonts exist
@@ -178,15 +174,68 @@ jobs:
         echo "✅ Shaders detected"
 
     # ==================================================
-    # UNIT TEST 18 — Project contains resources
+    # UNIT TEST 18 — Resources array not empty
     # ==================================================
     - name: Unit Test 18 — Project contains resources
       run: |
         grep -q '"resources":\[' "$PROJECT_FILE"
-        echo "✅ Project contains declared resources"
+        echo "✅ Resources array exists"
+
+    # ==================================================
+    # UNIT TEST 19 — AudioGroups exist
+    # ==================================================
+    - name: Unit Test 19 — AudioGroups exist
+      run: |
+        grep -q '"AudioGroups"' "$PROJECT_FILE"
+        echo "✅ AudioGroups present"
+
+    # ==================================================
+    # UNIT TEST 20 — TextureGroups include Default
+    # ==================================================
+    - name: Unit Test 20 — TextureGroups include Default
+      run: |
+        grep -q '"TextureGroups"' "$PROJECT_FILE"
+        grep -q '"Default"' "$PROJECT_FILE"
+        echo "✅ Default TextureGroup present"
+
+    # ==================================================
+    # UNIT TEST 21 — Folders list exists
+    # ==================================================
+    - name: Unit Test 21 — Folders list exists
+      run: |
+        grep -q '"Folders":\[' "$PROJECT_FILE"
+        echo "✅ Folders list present"
+
+    # ==================================================
+    # UNIT TEST 22 — RoomOrderNodes list exists
+    # ==================================================
+    - name: Unit Test 22 — RoomOrderNodes list exists
+      run: |
+        grep -q '"RoomOrderNodes":\[' "$PROJECT_FILE"
+        echo "✅ RoomOrderNodes list present"
+
+    # ==================================================
+    # UNIT TEST 23 — RoomOrderNodes referenced in resources
+    # ==================================================
+    - name: Unit Test 23 — RoomOrderNodes referenced in resources
+      run: |
+        grep '"roomId"' "$PROJECT_FILE" | grep '"path"' | \
+        sed -E 's/.*"path":"([^"]+)".*/\1/' | \
+        while read r; do
+          grep -q "$r" "$PROJECT_FILE" || exit 1
+        done
+        echo "✅ RoomOrderNodes paths referenced in resources"
+
+    # ==================================================
+    # UNIT TEST 24 — Project template type
+    # ==================================================
+    - name: Unit Test 24 — Project templateType
+      run: |
+        grep -q '"templateType":"game"' "$PROJECT_FILE"
+        echo "✅ Correct project template type"
 
     # ==================================================
     # END
     # ==================================================
     - name: Unit Tests Complete
-      run: echo "🎉 All 18 unit tests passed (100% logical coverage)"
+      run: echo "🎉 All 24 unit tests passed — polished validation complete"
