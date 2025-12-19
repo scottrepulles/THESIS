@@ -92,7 +92,7 @@
     {"$GMFolder":"","%Name":"Timelines","folderPath":"folders/Timelines.yy","name":"Timelines","resourceType":"GMFolder","resourceVersion":"2.0"}],
   "ForcedPrefabProjectReferences":[],
   "IncludedFiles":[],
-  "isEcma":false, // resolve project validation defect after failed test run
+  "isEcma":true, // trigger validation failure to verify CI error detection
   "LibraryEmitters":[],
   "MetaData":{
     "IDEVersion":"2024.14.1.210"},
