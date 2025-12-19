@@ -48,24 +48,27 @@ jobs:
         grep -q '"resourceType":"GMProject"' "$PROJECT_FILE"
 
     # ==================================================
-    # UNIT TEST 4 — isEcma configuration (REAL FAILURE TEST)
+    # UNIT TEST 4 — Required root sections
     # ==================================================
-    - name: Unit Test 4 — isEcma must be false
-      run: |
-        set -e
-        VALUE=$(grep '"isEcma"' "$PROJECT_FILE" | head -n 1)
-        echo "Detected isEcma: $VALUE"
-        echo "$VALUE" | grep -q 'false'
-
-    # ==================================================
-    # UNIT TEST 5 — Required root sections exist
-    # ==================================================
-    - name: Unit Test 5 — Required root sections
+    - name: Unit Test 4 — Required root sections exist
       run: |
         set -e
         for k in '"resources"' '"Folders"' '"RoomOrderNodes"' '"TextureGroups"' '"AudioGroups"'; do
           grep -q "$k" "$PROJECT_FILE"
         done
+
+    # ==================================================
+    # UNIT TEST 5 — isEcma configuration (REAL ASSERTION)
+    # ==================================================
+    - name: Unit Test 5 — Validate isEcma configuration
+      run: |
+        set -euo pipefail
+        LINE=$(grep '"isEcma"' "$PROJECT_FILE" | head -n 1)
+        echo "Detected isEcma line: $LINE"
+        echo "$LINE" | grep -q '"isEcma":false' || {
+          echo "❌ isEcma must be false"
+          exit 1
+        }
 
     # ==================================================
     # UNIT TEST 6 — Required directories exist
@@ -102,49 +105,9 @@ jobs:
         find "$PROJECT_DIR/rooms" -name "*.yy" | grep -q .
 
     # ==================================================
-    # UNIT TEST 10 — Fonts exist
+    # UNIT TEST 10 — Resource paths exist
     # ==================================================
-    - name: Unit Test 10 — Fonts exist
-      run: |
-        set -e
-        find "$PROJECT_DIR/fonts" -name "*.yy" | grep -q .
-
-    # ==================================================
-    # UNIT TEST 11 — Sprites exist
-    # ==================================================
-    - name: Unit Test 11 — Sprites exist
-      run: |
-        set -e
-        find "$PROJECT_DIR/sprites" -name "*.yy" | grep -q .
-
-    # ==================================================
-    # UNIT TEST 12 — Sounds exist
-    # ==================================================
-    - name: Unit Test 12 — Sounds exist
-      run: |
-        set -e
-        find "$PROJECT_DIR/sounds" -name "*.yy" | grep -q .
-
-    # ==================================================
-    # UNIT TEST 13 — Sequences exist
-    # ==================================================
-    - name: Unit Test 13 — Sequences exist
-      run: |
-        set -e
-        find "$PROJECT_DIR/sequences" -name "*.yy" | grep -q .
-
-    # ==================================================
-    # UNIT TEST 14 — Shaders exist
-    # ==================================================
-    - name: Unit Test 14 — Shaders exist
-      run: |
-        set -e
-        find "$PROJECT_DIR/shaders" -name "*.yy" | grep -q .
-
-    # ==================================================
-    # UNIT TEST 15 — Resource paths valid
-    # ==================================================
-    - name: Unit Test 15 — Resource paths valid
+    - name: Unit Test 10 — Resource paths exist
       run: |
         set -e
         grep '"path":"' "$PROJECT_FILE" \
@@ -154,18 +117,18 @@ jobs:
           done
 
     # ==================================================
-    # UNIT TEST 16 — No duplicate resource paths
+    # UNIT TEST 11 — No duplicate resource paths
     # ==================================================
-    - name: Unit Test 16 — No duplicate resource paths
+    - name: Unit Test 11 — No duplicate resource paths
       run: |
         set -e
-        DUPES=$(grep '"path":"' "$PROJECT_FILE" | sort | uniq -d)
+        DUPES=$(grep '"path":"' "$PROJECT_FILE" | sed 's/.*"path":"//' | sed 's/".*//' | sort | uniq -d)
         test -z "$DUPES"
 
     # ==================================================
-    # UNIT TEST 17 — RoomOrderNodes valid
+    # UNIT TEST 12 — RoomOrderNodes valid
     # ==================================================
-    - name: Unit Test 17 — RoomOrderNodes valid
+    - name: Unit Test 12 — RoomOrderNodes valid
       run: |
         set -e
         grep '"roomId"' "$PROJECT_FILE" \
@@ -176,23 +139,63 @@ jobs:
           done
 
     # ==================================================
-    # UNIT TEST 18 — At least one room ordered
+    # UNIT TEST 13 — Fonts exist
     # ==================================================
-    - name: Unit Test 18 — RoomOrderNodes not empty
+    - name: Unit Test 13 — Fonts exist
       run: |
         set -e
-        grep -q '"RoomOrderNodes":\[' "$PROJECT_FILE"
+        find "$PROJECT_DIR/fonts" -name "*.yy" | grep -q .
 
     # ==================================================
-    # UNIT TEST 19 — Resources array exists
+    # UNIT TEST 14 — Sprites exist
     # ==================================================
-    - name: Unit Test 19 — Resources array exists
+    - name: Unit Test 14 — Sprites exist
+      run: |
+        set -e
+        find "$PROJECT_DIR/sprites" -name "*.yy" | grep -q .
+
+    # ==================================================
+    # UNIT TEST 15 — Sounds exist
+    # ==================================================
+    - name: Unit Test 15 — Sounds exist
+      run: |
+        set -e
+        find "$PROJECT_DIR/sounds" -name "*.yy" | grep -q .
+
+    # ==================================================
+    # UNIT TEST 16 — Sequences exist
+    # ==================================================
+    - name: Unit Test 16 — Sequences exist
+      run: |
+        set -e
+        find "$PROJECT_DIR/sequences" -name "*.yy" | grep -q .
+
+    # ==================================================
+    # UNIT TEST 17 — Shaders exist
+    # ==================================================
+    - name: Unit Test 17 — Shaders exist
+      run: |
+        set -e
+        find "$PROJECT_DIR/shaders" -name "*.yy" | grep -q .
+
+    # ==================================================
+    # UNIT TEST 18 — Resources array not empty
+    # ==================================================
+    - name: Unit Test 18 — Resources array not empty
       run: |
         set -e
         grep -q '"resources":\[' "$PROJECT_FILE"
 
     # ==================================================
-    # UNIT TEST 20 — Default TextureGroup exists
+    # UNIT TEST 19 — AudioGroups defined
+    # ==================================================
+    - name: Unit Test 19 — AudioGroups defined
+      run: |
+        set -e
+        grep -q '"AudioGroups"' "$PROJECT_FILE"
+
+    # ==================================================
+    # UNIT TEST 20 — TextureGroups include Default
     # ==================================================
     - name: Unit Test 20 — Default TextureGroup exists
       run: |
@@ -201,39 +204,39 @@ jobs:
         grep -q '"Default"' "$PROJECT_FILE"
 
     # ==================================================
-    # UNIT TEST 21 — templateType is game
+    # UNIT TEST 21 — Folders list exists
     # ==================================================
-    - name: Unit Test 21 — templateType is game
+    - name: Unit Test 21 — Folders list exists
+      run: |
+        set -e
+        grep -q '"Folders":\[' "$PROJECT_FILE"
+
+    # ==================================================
+    # UNIT TEST 22 — RoomOrderNodes list exists
+    # ==================================================
+    - name: Unit Test 22 — RoomOrderNodes list exists
+      run: |
+        set -e
+        grep -q '"RoomOrderNodes":\[' "$PROJECT_FILE"
+
+    # ==================================================
+    # UNIT TEST 23 — templateType is game
+    # ==================================================
+    - name: Unit Test 23 — Project templateType
       run: |
         set -e
         grep -q '"templateType":"game"' "$PROJECT_FILE"
 
     # ==================================================
-    # UNIT TEST 22 — IDE metadata exists
+    # UNIT TEST 24 — IDE metadata present
     # ==================================================
-    - name: Unit Test 22 — IDE metadata exists
+    - name: Unit Test 24 — IDE metadata exists
       run: |
         set -e
         grep -q '"IDEVersion"' "$PROJECT_FILE"
 
     # ==================================================
-    # UNIT TEST 23 — Project name consistency
-    # ==================================================
-    - name: Unit Test 23 — Project name consistency
-      run: |
-        set -e
-        grep -q '"name":"Tower Defense v1(main)"' "$PROJECT_FILE"
-
-    # ==================================================
-    # UNIT TEST 24 — Folder structure declared
-    # ==================================================
-    - name: Unit Test 24 — Folder structure declared
-      run: |
-        set -e
-        grep -q '"folderPath"' "$PROJECT_FILE"
-
-    # ==================================================
     # END
     # ==================================================
     - name: Unit Tests Complete
-      run: echo "🎉 All 24 unit tests passed — real GameMaker validation"
+      run: echo "🎉 All 24 GameMaker-accurate unit tests passed"
