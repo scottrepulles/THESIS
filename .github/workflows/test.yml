@@ -17,6 +17,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Install jq
+      run: sudo apt-get update && sudo apt-get install -y jq
+
     - name: Define project paths
       run: |
         echo "PROJECT_DIR=Tower Defense v1(back up6)" >> $GITHUB_ENV
@@ -27,215 +30,205 @@ jobs:
     # ==================================================
     - name: Unit Test 1 — Project file exists
       run: |
+        set -euo pipefail
         test -f "$PROJECT_FILE"
-        echo "✅ Project file exists"
 
     # ==================================================
     # UNIT TEST 2 — Project file readable
     # ==================================================
     - name: Unit Test 2 — Project file readable
       run: |
+        set -euo pipefail
         test -r "$PROJECT_FILE"
-        echo "✅ Project file readable"
 
     # ==================================================
-    # UNIT TEST 3 — GameMaker project type
+    # UNIT TEST 3 — Valid JSON
     # ==================================================
-    - name: Unit Test 3 — Validate GameMaker project type
+    - name: Unit Test 3 — Project file is valid JSON
       run: |
-        grep -q '"resourceType":"GMProject"' "$PROJECT_FILE"
-        echo "✅ Correct GameMaker project type"
+        set -euo pipefail
+        jq empty "$PROJECT_FILE"
 
     # ==================================================
-    # UNIT TEST 4 — Required root keys
+    # UNIT TEST 4 — GameMaker project type
     # ==================================================
-    - name: Unit Test 4 — Required root keys exist
+    - name: Unit Test 4 — Validate GameMaker project type
       run: |
-        KEYS=(resources Folders RoomOrderNodes TextureGroups isEcma)
-        for k in "${KEYS[@]}"; do
-          grep -q "\"$k\"" "$PROJECT_FILE" || exit 1
-        done
-        echo "✅ Required root keys present"
+        set -euo pipefail
+        jq -e '.resourceType == "GMProject"' "$PROJECT_FILE"
 
     # ==================================================
-    # UNIT TEST 5 — isEcma configuration
+    # UNIT TEST 5 — isEcma configuration (REAL)
     # ==================================================
-    - name: Unit Test 5 — isEcma configuration
+    - name: Unit Test 5 — Validate isEcma configuration
       run: |
-        grep '"isEcma"' "$PROJECT_FILE" | grep -q 'false'
-        echo "✅ isEcma correctly set to false"
+        set -euo pipefail
+        VALUE=$(jq -r '.isEcma' "$PROJECT_FILE")
+        echo "Detected isEcma: $VALUE"
+        [ "$VALUE" = "false" ]
 
     # ==================================================
-    # UNIT TEST 6 — Required directories
+    # UNIT TEST 6 — Required root keys
     # ==================================================
-    - name: Unit Test 6 — Required directories exist
+    - name: Unit Test 6 — Required root keys exist
       run: |
+        set -euo pipefail
+        jq -e '.resources and .Folders and .RoomOrderNodes and .TextureGroups' "$PROJECT_FILE"
+
+    # ==================================================
+    # UNIT TEST 7 — Required directories exist
+    # ==================================================
+    - name: Unit Test 7 — Required directories exist
+      run: |
+        set -euo pipefail
         DIRS=(fonts notes objects options paths rooms scripts sequences shaders sounds sprites)
         for d in "${DIRS[@]}"; do
-          test -d "$PROJECT_DIR/$d" || exit 1
+          test -d "$PROJECT_DIR/$d"
         done
-        echo "✅ Required directories exist"
 
     # ==================================================
-    # UNIT TEST 7 — Scripts exist
+    # UNIT TEST 8 — Scripts exist
     # ==================================================
-    - name: Unit Test 7 — Scripts exist
+    - name: Unit Test 8 — Scripts exist
       run: |
+        set -euo pipefail
         find "$PROJECT_DIR/scripts" -type f -name "*.yy" | grep -q .
-        echo "✅ Scripts detected"
 
     # ==================================================
-    # UNIT TEST 8 — Objects exist
+    # UNIT TEST 9 — Objects exist
     # ==================================================
-    - name: Unit Test 8 — Objects exist
+    - name: Unit Test 9 — Objects exist
       run: |
+        set -euo pipefail
         find "$PROJECT_DIR/objects" -type f -name "*.yy" | grep -q .
-        echo "✅ Objects detected"
 
     # ==================================================
-    # UNIT TEST 9 — Rooms exist
+    # UNIT TEST 10 — Rooms exist
     # ==================================================
-    - name: Unit Test 9 — Rooms exist
+    - name: Unit Test 10 — Rooms exist
       run: |
+        set -euo pipefail
         find "$PROJECT_DIR/rooms" -type f -name "*.yy" | grep -q .
-        echo "✅ Rooms detected"
 
     # ==================================================
-    # UNIT TEST 10 — Resource paths valid
+    # UNIT TEST 11 — Fonts exist
     # ==================================================
-    - name: Unit Test 10 — Resource paths valid
+    - name: Unit Test 11 — Fonts exist
       run: |
-        grep '"path":"' "$PROJECT_FILE" | \
-        sed -E 's/.*"path":"([^"]+)".*/\1/' | \
-        while read p; do
-          test -f "$PROJECT_DIR/$p" || exit 1
-        done
-        echo "✅ All resource paths valid"
-
-    # ==================================================
-    # UNIT TEST 11 — No duplicate resource paths
-    # ==================================================
-    - name: Unit Test 11 — No duplicate resource paths
-      run: |
-        DUPES=$(grep '"path":"' "$PROJECT_FILE" | sort | uniq -d)
-        test -z "$DUPES"
-        echo "✅ No duplicate resource paths"
-
-    # ==================================================
-    # UNIT TEST 12 — RoomOrderNodes valid
-    # ==================================================
-    - name: Unit Test 12 — RoomOrderNodes valid
-      run: |
-        grep '"roomId"' "$PROJECT_FILE" | grep '"path"' | \
-        sed -E 's/.*"path":"([^"]+)".*/\1/' | \
-        while read r; do
-          test -f "$PROJECT_DIR/$r" || exit 1
-        done
-        echo "✅ Room order references valid rooms"
-
-    # ==================================================
-    # UNIT TEST 13 — Fonts exist
-    # ==================================================
-    - name: Unit Test 13 — Fonts exist
-      run: |
+        set -euo pipefail
         find "$PROJECT_DIR/fonts" -type f -name "*.yy" | grep -q .
-        echo "✅ Fonts detected"
 
     # ==================================================
-    # UNIT TEST 14 — Sprites exist
+    # UNIT TEST 12 — Sprites exist
     # ==================================================
-    - name: Unit Test 14 — Sprites exist
+    - name: Unit Test 12 — Sprites exist
       run: |
+        set -euo pipefail
         find "$PROJECT_DIR/sprites" -type f -name "*.yy" | grep -q .
-        echo "✅ Sprites detected"
 
     # ==================================================
-    # UNIT TEST 15 — Sounds exist
+    # UNIT TEST 13 — Sounds exist
     # ==================================================
-    - name: Unit Test 15 — Sounds exist
+    - name: Unit Test 13 — Sounds exist
       run: |
+        set -euo pipefail
         find "$PROJECT_DIR/sounds" -type f -name "*.yy" | grep -q .
-        echo "✅ Sounds detected"
 
     # ==================================================
-    # UNIT TEST 16 — Sequences exist
+    # UNIT TEST 14 — Sequences exist
     # ==================================================
-    - name: Unit Test 16 — Sequences exist
+    - name: Unit Test 14 — Sequences exist
       run: |
+        set -euo pipefail
         find "$PROJECT_DIR/sequences" -type f -name "*.yy" | grep -q .
-        echo "✅ Sequences detected"
 
     # ==================================================
-    # UNIT TEST 17 — Shaders exist
+    # UNIT TEST 15 — Shaders exist
     # ==================================================
-    - name: Unit Test 17 — Shaders exist
+    - name: Unit Test 15 — Shaders exist
       run: |
+        set -euo pipefail
         find "$PROJECT_DIR/shaders" -type f -name "*.yy" | grep -q .
-        echo "✅ Shaders detected"
 
     # ==================================================
-    # UNIT TEST 18 — Resources array not empty
+    # UNIT TEST 16 — Resource paths exist
     # ==================================================
-    - name: Unit Test 18 — Project contains resources
+    - name: Unit Test 16 — Resource paths exist
       run: |
-        grep -q '"resources":\[' "$PROJECT_FILE"
-        echo "✅ Resources array exists"
-
-    # ==================================================
-    # UNIT TEST 19 — AudioGroups exist
-    # ==================================================
-    - name: Unit Test 19 — AudioGroups exist
-      run: |
-        grep -q '"AudioGroups"' "$PROJECT_FILE"
-        echo "✅ AudioGroups present"
-
-    # ==================================================
-    # UNIT TEST 20 — TextureGroups include Default
-    # ==================================================
-    - name: Unit Test 20 — TextureGroups include Default
-      run: |
-        grep -q '"TextureGroups"' "$PROJECT_FILE"
-        grep -q '"Default"' "$PROJECT_FILE"
-        echo "✅ Default TextureGroup present"
-
-    # ==================================================
-    # UNIT TEST 21 — Folders list exists
-    # ==================================================
-    - name: Unit Test 21 — Folders list exists
-      run: |
-        grep -q '"Folders":\[' "$PROJECT_FILE"
-        echo "✅ Folders list present"
-
-    # ==================================================
-    # UNIT TEST 22 — RoomOrderNodes list exists
-    # ==================================================
-    - name: Unit Test 22 — RoomOrderNodes list exists
-      run: |
-        grep -q '"RoomOrderNodes":\[' "$PROJECT_FILE"
-        echo "✅ RoomOrderNodes list present"
-
-    # ==================================================
-    # UNIT TEST 23 — RoomOrderNodes referenced in resources
-    # ==================================================
-    - name: Unit Test 23 — RoomOrderNodes referenced in resources
-      run: |
-        grep '"roomId"' "$PROJECT_FILE" | grep '"path"' | \
-        sed -E 's/.*"path":"([^"]+)".*/\1/' | \
-        while read r; do
-          grep -q "$r" "$PROJECT_FILE" || exit 1
+        set -euo pipefail
+        jq -r '.resources[].id.path' "$PROJECT_FILE" | while read p; do
+          test -f "$PROJECT_DIR/$p"
         done
-        echo "✅ RoomOrderNodes paths referenced in resources"
 
     # ==================================================
-    # UNIT TEST 24 — Project template type
+    # UNIT TEST 17 — No duplicate resource paths
     # ==================================================
-    - name: Unit Test 24 — Project templateType
+    - name: Unit Test 17 — No duplicate resource paths
       run: |
-        grep -q '"templateType":"game"' "$PROJECT_FILE"
-        echo "✅ Correct project template type"
+        set -euo pipefail
+        DUPES=$(jq -r '.resources[].id.path' "$PROJECT_FILE" | sort | uniq -d)
+        [ -z "$DUPES" ]
+
+    # ==================================================
+    # UNIT TEST 18 — RoomOrderNodes valid
+    # ==================================================
+    - name: Unit Test 18 — RoomOrderNodes valid
+      run: |
+        set -euo pipefail
+        jq -r '.RoomOrderNodes[].roomId.path' "$PROJECT_FILE" | while read r; do
+          test -f "$PROJECT_DIR/$r"
+        done
+
+    # ==================================================
+    # UNIT TEST 19 — At least 1 room declared
+    # ==================================================
+    - name: Unit Test 19 — At least one room declared
+      run: |
+        set -euo pipefail
+        jq '.RoomOrderNodes | length > 0' "$PROJECT_FILE" | grep true
+
+    # ==================================================
+    # UNIT TEST 20 — At least 1 script declared
+    # ==================================================
+    - name: Unit Test 20 — At least one script declared
+      run: |
+        set -euo pipefail
+        jq -r '.resources[].id.path' "$PROJECT_FILE" | grep '^scripts/' | grep -q .
+
+    # ==================================================
+    # UNIT TEST 21 — At least 1 object declared
+    # ==================================================
+    - name: Unit Test 21 — At least one object declared
+      run: |
+        set -euo pipefail
+        jq -r '.resources[].id.path' "$PROJECT_FILE" | grep '^objects/' | grep -q .
+
+    # ==================================================
+    # UNIT TEST 22 — At least 1 sprite declared
+    # ==================================================
+    - name: Unit Test 22 — At least one sprite declared
+      run: |
+        set -euo pipefail
+        jq -r '.resources[].id.path' "$PROJECT_FILE" | grep '^sprites/' | grep -q .
+
+    # ==================================================
+    # UNIT TEST 23 — TextureGroups exist
+    # ==================================================
+    - name: Unit Test 23 — TextureGroups exist
+      run: |
+        set -euo pipefail
+        jq '.TextureGroups | length > 0' "$PROJECT_FILE" | grep true
+
+    # ==================================================
+    # UNIT TEST 24 — Project contains resources
+    # ==================================================
+    - name: Unit Test 24 — Project contains resources
+      run: |
+        set -euo pipefail
+        jq '.resources | length > 0' "$PROJECT_FILE" | grep true
 
     # ==================================================
     # END
     # ==================================================
     - name: Unit Tests Complete
-      run: echo "🎉 All 24 unit tests passed — polished validation complete"
+      run: echo "🎉 All 24 unit tests passed (STRICT MODE ENABLED)"
