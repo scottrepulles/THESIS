@@ -1,64 +1,45 @@
-# CI – create a build release artifact after tests pass
-# This runs only after the "Unit Tests – GameMaker Project" workflow completes successfully.
-name: CI – Build & Release after Tests
+name: CI – Tower Defense
 
 on:
-  workflow_run:
-    workflows:
-      - "Unit Tests – GameMaker Project"
-    types:
-      - completed
+  push:
+    branches: [cicd]
 
 jobs:
-  build-and-release:
-    name: Build project and create release
+  ci:
     runs-on: ubuntu-latest
-    # only run when the upstream workflow completed successfully
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: CI banner
+      - name: CI validation banner
         run: |
-          echo "🚀 Build/Release triggered by successful tests"
-          echo "Upstream workflow run id: ${{ github.event.workflow_run.id }}"
-          echo "Commit: ${{ github.event.workflow_run.head_sha }}"
+          echo "🚀 CI started for Tower Defense"
+          echo "Commit: $GITHUB_SHA"
 
-      - name: Create build archive
-        id: archive
+      - name: Verify GameMaker project exists
         run: |
-          PKG="Tower Defense v1(back up6)"
-          SHORTSHA=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-8)
-          ARCHIVE_NAME="tower-defense-build-${SHORTSHA}.zip"
-          if [ ! -d "$PKG" ]; then
-            echo "Project directory '$PKG' not found"
+          PROJECT="Tower Defense v1(back up6)"
+
+          if [ ! -d "$PROJECT" ]; then
+            echo "❌ Project folder not found"
             exit 1
           fi
-          zip -r "$ARCHIVE_NAME" "$PKG"
-          echo "archive=$ARCHIVE_NAME" >> $GITHUB_OUTPUT
 
-      - name: Create draft release
-        id: create_release
-        uses: peter-evans/create-release@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: build-${{ github.event.workflow_run.head_sha }}
-          release_name: "Build - ${{ github.event.workflow_run.head_sha }}"
-          draft: true
-          prerelease: false
-          body: |
-            Auto-generated build from successful test workflow run.
-            Workflow run id: ${{ github.event.workflow_run.id }}
-            Commit: ${{ github.event.workflow_run.head_sha }}
+          if ! ls "$PROJECT"/*.yyp >/dev/null 2>&1; then
+            echo "❌ No .yyp GameMaker project file found"
+            exit 1
+          fi
 
-      - name: Upload build artifact to release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: ${{ steps.archive.outputs.archive }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "✅ GameMaker project folder and .yyp file found"
 
-      - name: Finish
-        run: echo "✅ Draft release created and build artifact uploaded. Release tag: build-${{ github.event.workflow_run.head_sha }}"
+      - name: Verify GameMaker project type
+        run: |
+          PROJECT_FILE=$(ls "Tower Defense v1(back up6)"/*.yyp)
+
+          grep -q '"resourceType":"GMProject"' "$PROJECT_FILE"
+
+          echo "✅ Confirmed GameMaker project type"
+
+      - name: CI complete
+        run: echo "🎉 CI passed successfully"
