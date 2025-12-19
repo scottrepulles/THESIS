@@ -1,4 +1,3 @@
-// Unit Testing for 100% Coverage
 {
   "$GMProject":"v1",
   "%Name":"Tower Defense v1(main)",
@@ -95,7 +94,7 @@
   ],
   "ForcedPrefabProjectReferences":[],
   "IncludedFiles":[],
-  "isEcma":true, // intentional
+  "isEcma":false,
   "LibraryEmitters":[],
   "MetaData":{
     "IDEVersion":"2024.14.1.210",
