@@ -11,9 +11,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # -----------------------------
+      # SETUP
+      # -----------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install jq (JSON validator)
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      # -----------------------------
+      # UNIT TEST 0 — PROJECT EXISTS
+      # -----------------------------
       - name: Unit Test 0 — Locate GameMaker project
         run: |
           PROJECT="Tower Defense v1(back up6)"
@@ -26,19 +35,52 @@ jobs:
 
           echo "✅ GameMaker project found: $PROJECT_FILE"
 
-      - name: Unit Test 1 — Validate project type
+      # -----------------------------
+      # UNIT TEST 1 — JSON SYNTAX
+      # -----------------------------
+      - name: Unit Test 1 — Validate JSON syntax
         run: |
-          grep -q '"resourceType":"GMProject"' "Tower Defense v1(back up6)"/*.yyp
+          jq . "Tower Defense v1(back up6)"/*.yyp > /dev/null
+          echo "✅ JSON syntax is valid"
+
+      # -----------------------------
+      # UNIT TEST 2 — PROJECT TYPE
+      # -----------------------------
+      - name: Unit Test 2 — Validate project type
+        run: |
+          jq -e '.resourceType == "GMProject"' "Tower Defense v1(back up6)"/*.yyp > /dev/null
           echo "✅ Valid GameMaker project type"
 
-      - name: Unit Test 2 — Validate required sections
+      # -----------------------------
+      # UNIT TEST 3 — REQUIRED SECTIONS
+      # -----------------------------
+      - name: Unit Test 3 — Validate required sections
         run: |
-          grep -q '"resources"' "Tower Defense v1(back up6)"/*.yyp
-          grep -q '"Folders"' "Tower Defense v1(back up6)"/*.yyp
-          grep -q '"RoomOrderNodes"' "Tower Defense v1(back up6)"/*.yyp
+          jq -e '.resources' "Tower Defense v1(back up6)"/*.yyp > /dev/null
+          jq -e '.Folders' "Tower Defense v1(back up6)"/*.yyp > /dev/null
+          jq -e '.RoomOrderNodes' "Tower Defense v1(back up6)"/*.yyp > /dev/null
           echo "✅ Required sections exist"
 
-      - name: Unit Test 3 — Validate required directories
+      # -----------------------------
+      # UNIT TEST 4 — ASSERTION TEST (FAILURE DEMO)
+      # -----------------------------
+      - name: Unit Test 4 — Validate isEcma must be false
+        run: |
+          VALUE=$(jq -r '.isEcma' "Tower Defense v1(back up6)"/*.yyp)
+
+          echo "Detected isEcma value: $VALUE"
+
+          if [ "$VALUE" != "false" ]; then
+            echo "❌ Test Failed: isEcma must be false"
+            exit 1
+          fi
+
+          echo "✅ Test Passed: isEcma is false"
+
+      # -----------------------------
+      # UNIT TEST 5 — REQUIRED DIRECTORIES
+      # -----------------------------
+      - name: Unit Test 5 — Validate required directories
         run: |
           cd "Tower Defense v1(back up6)"
 
@@ -62,5 +104,8 @@ jobs:
 
           echo "✅ All required directories exist"
 
+      # -----------------------------
+      # END
+      # -----------------------------
       - name: Unit Tests Complete
         run: echo "🎉 All unit tests passed (100% logical coverage)"
