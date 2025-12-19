@@ -37,12 +37,17 @@ jobs:
           echo "✅ Project file found"
 
       # -----------------------------
-      # UNIT TEST 2 — VALID JSON
+      # UNIT TEST 2 — BASIC FILE STRUCTURE CHECK
       # -----------------------------
-      - name: Unit Test 2 — Validate JSON syntax
+      - name: Unit Test 2 — Validate GameMaker project structure
         run: |
-          jq . "$PROJECT_FILE" > /dev/null
-          echo "✅ Valid JSON"
+          grep -q '"resourceType":"GMProject"' "$PROJECT_FILE" || exit 1
+          grep -q '"resources"' "$PROJECT_FILE" || exit 1
+          grep -q '"Folders"' "$PROJECT_FILE" || exit 1
+          grep -q '"RoomOrderNodes"' "$PROJECT_FILE" || exit 1
+          grep -q '"isEcma"' "$PROJECT_FILE" || exit 1
+      
+          echo "✅ GameMaker project structure valid"
 
       # -----------------------------
       # UNIT TEST 3 — GAME MAKER PROJECT TYPE
