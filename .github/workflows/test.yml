@@ -59,20 +59,28 @@ jobs:
           echo "✅ Required sections exist"
 
       # -----------------------------
-      # UNIT TEST 4 — ASSERTION (FAILURE DEMO)
+      # UNIT TEST 4 — CONFIGURATION ASSERTION
       # -----------------------------
-      - name: Unit Test 4 — Validate isEcma must be false
+      - name: Unit Test 4 — Validate isEcma configuration
         run: |
-          VALUE=$(grep '"isEcma"' "Tower Defense v1(back up6)"/*.yyp | head -n 1)
+          FILE="Tower Defense v1(back up6)"/*.yyp
 
-          echo "Detected: $VALUE"
-
-          if echo "$VALUE" | grep -q 'true'; then
-            echo "❌ Test Failed: isEcma must be false"
+          # Check key existence
+          if ! grep -q '"isEcma"' "$FILE"; then
+            echo "❌ Test Failed: isEcma flag is missing"
             exit 1
           fi
 
-          echo "✅ Test Passed: isEcma is false"
+          VALUE=$(grep '"isEcma"' "$FILE" | head -n 1)
+          echo "Detected isEcma value: $VALUE"
+
+          # Validate value
+          if echo "$VALUE" | grep -q 'true'; then
+            echo "❌ Test Failed: isEcma must be false for this project"
+            exit 1
+          fi
+
+          echo "✅ isEcma configuration is valid (false)"
 
       # -----------------------------
       # UNIT TEST 5 — REQUIRED DIRECTORIES
