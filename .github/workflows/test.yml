@@ -16,8 +16,8 @@ jobs:
 
       - name: Locate GameMaker project file
         run: |
-          PROJECT="Tower Defense v1(back up6)"
-          PROJECT_FILE=$(ls "$PROJECT"/*.yyp 2>/dev/null || true)
+          PROJECT_DIR="Tower Defense v1(back up6)"
+          PROJECT_FILE=$(ls "$PROJECT_DIR"/*.yyp 2>/dev/null || true)
 
           if [ -z "$PROJECT_FILE" ]; then
             echo "❌ No GameMaker (.yyp) project found"
@@ -38,13 +38,18 @@ jobs:
 
       - name: Validate all resource paths exist
         run: |
-          PROJECT_FILE=$(ls "Tower Defense v1(back up6)"/*.yyp)
+          PROJECT_DIR="Tower Defense v1(back up6)"
+          PROJECT_FILE=$(ls "$PROJECT_DIR"/*.yyp)
 
-          grep -o '"path":"[^"]*"' "$PROJECT_FILE" | cut -d':' -f2 | tr -d '"' | while read path; do
-            if [ ! -f "$path" ]; then
-              echo "❌ Missing resource file: $path"
-              exit 1
-            fi
-          done
+          grep -o '"path":"[^"]*"' "$PROJECT_FILE" \
+          | cut -d':' -f2 \
+          | tr -d '"' \
+          | while read path; do
+              FULL_PATH="$PROJECT_DIR/$path"
+              if [ ! -f "$FULL_PATH" ]; then
+                echo "❌ Missing resource file: $FULL_PATH"
+                exit 1
+              fi
+            done
 
           echo "✅ All declared resources exist"
