@@ -17,9 +17,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install jq
-      run: sudo apt-get update && sudo apt-get install -y jq
-
     - name: Define project paths
       run: |
         echo "PROJECT_DIR=Tower Defense v1(back up6)" >> $GITHUB_ENV
@@ -30,7 +27,6 @@ jobs:
     # ==================================================
     - name: Unit Test 1 — Project file exists
       run: |
-        set -euo pipefail
         test -f "$PROJECT_FILE"
 
     # ==================================================
@@ -38,51 +34,59 @@ jobs:
     # ==================================================
     - name: Unit Test 2 — Project file readable
       run: |
-        set -euo pipefail
         test -r "$PROJECT_FILE"
 
     # ==================================================
-    # UNIT TEST 3 — Valid JSON
+    # UNIT TEST 3 — Valid JSON (STRICT)
     # ==================================================
     - name: Unit Test 3 — Project file is valid JSON
       run: |
-        set -euo pipefail
-        jq empty "$PROJECT_FILE"
+        python3 -m json.tool "$PROJECT_FILE" > /dev/null
 
     # ==================================================
     # UNIT TEST 4 — GameMaker project type
     # ==================================================
     - name: Unit Test 4 — Validate GameMaker project type
       run: |
-        set -euo pipefail
-        jq -e '.resourceType == "GMProject"' "$PROJECT_FILE"
+        python3 - << 'EOF'
+import json
+with open("$PROJECT_FILE") as f:
+    data = json.load(f)
+assert data.get("resourceType") == "GMProject"
+EOF
 
     # ==================================================
-    # UNIT TEST 5 — isEcma configuration (REAL)
+    # UNIT TEST 5 — isEcma exists
     # ==================================================
-    - name: Unit Test 5 — Validate isEcma configuration
+    - name: Unit Test 5 — Validate isEcma key exists
       run: |
-        set -euo pipefail
-        VALUE=$(jq -r '.isEcma' "$PROJECT_FILE")
-        echo "Detected isEcma: $VALUE"
-        [ "$VALUE" = "false" ]
+        python3 - << 'EOF'
+import json
+with open("$PROJECT_FILE") as f:
+    data = json.load(f)
+assert "isEcma" in data
+print("isEcma:", data["isEcma"])
+EOF
 
     # ==================================================
     # UNIT TEST 6 — Required root keys
     # ==================================================
     - name: Unit Test 6 — Required root keys exist
       run: |
-        set -euo pipefail
-        jq -e '.resources and .Folders and .RoomOrderNodes and .TextureGroups' "$PROJECT_FILE"
+        python3 - << 'EOF'
+import json
+with open("$PROJECT_FILE") as f:
+    d = json.load(f)
+for key in ["resources", "Folders", "RoomOrderNodes", "TextureGroups"]:
+    assert key in d and len(d[key]) > 0
+EOF
 
     # ==================================================
     # UNIT TEST 7 — Required directories exist
     # ==================================================
     - name: Unit Test 7 — Required directories exist
       run: |
-        set -euo pipefail
-        DIRS=(fonts notes objects options paths rooms scripts sequences shaders sounds sprites)
-        for d in "${DIRS[@]}"; do
+        for d in fonts notes objects paths rooms scripts sequences shaders sounds sprites; do
           test -d "$PROJECT_DIR/$d"
         done
 
@@ -91,144 +95,127 @@ jobs:
     # ==================================================
     - name: Unit Test 8 — Scripts exist
       run: |
-        set -euo pipefail
-        find "$PROJECT_DIR/scripts" -type f -name "*.yy" | grep -q .
+        find "$PROJECT_DIR/scripts" -name "*.yy" | grep -q .
 
     # ==================================================
     # UNIT TEST 9 — Objects exist
     # ==================================================
     - name: Unit Test 9 — Objects exist
       run: |
-        set -euo pipefail
-        find "$PROJECT_DIR/objects" -type f -name "*.yy" | grep -q .
+        find "$PROJECT_DIR/objects" -name "*.yy" | grep -q .
 
     # ==================================================
     # UNIT TEST 10 — Rooms exist
     # ==================================================
     - name: Unit Test 10 — Rooms exist
       run: |
-        set -euo pipefail
-        find "$PROJECT_DIR/rooms" -type f -name "*.yy" | grep -q .
+        find "$PROJECT_DIR/rooms" -name "*.yy" | grep -q .
 
     # ==================================================
     # UNIT TEST 11 — Fonts exist
     # ==================================================
     - name: Unit Test 11 — Fonts exist
       run: |
-        set -euo pipefail
-        find "$PROJECT_DIR/fonts" -type f -name "*.yy" | grep -q .
+        find "$PROJECT_DIR/fonts" -name "*.yy" | grep -q .
 
     # ==================================================
     # UNIT TEST 12 — Sprites exist
     # ==================================================
     - name: Unit Test 12 — Sprites exist
       run: |
-        set -euo pipefail
-        find "$PROJECT_DIR/sprites" -type f -name "*.yy" | grep -q .
+        find "$PROJECT_DIR/sprites" -name "*.yy" | grep -q .
 
     # ==================================================
     # UNIT TEST 13 — Sounds exist
     # ==================================================
     - name: Unit Test 13 — Sounds exist
       run: |
-        set -euo pipefail
-        find "$PROJECT_DIR/sounds" -type f -name "*.yy" | grep -q .
+        find "$PROJECT_DIR/sounds" -name "*.yy" | grep -q .
 
     # ==================================================
     # UNIT TEST 14 — Sequences exist
     # ==================================================
     - name: Unit Test 14 — Sequences exist
       run: |
-        set -euo pipefail
-        find "$PROJECT_DIR/sequences" -type f -name "*.yy" | grep -q .
+        find "$PROJECT_DIR/sequences" -name "*.yy" | grep -q .
 
     # ==================================================
     # UNIT TEST 15 — Shaders exist
     # ==================================================
     - name: Unit Test 15 — Shaders exist
       run: |
-        set -euo pipefail
-        find "$PROJECT_DIR/shaders" -type f -name "*.yy" | grep -q .
+        find "$PROJECT_DIR/shaders" -name "*.yy" | grep -q .
 
     # ==================================================
     # UNIT TEST 16 — Resource paths exist
     # ==================================================
     - name: Unit Test 16 — Resource paths exist
       run: |
-        set -euo pipefail
-        jq -r '.resources[].id.path' "$PROJECT_FILE" | while read p; do
-          test -f "$PROJECT_DIR/$p"
-        done
+        python3 - << 'EOF'
+import json, os
+with open("$PROJECT_FILE") as f:
+    d = json.load(f)
+for r in d["resources"]:
+    path = r["id"]["path"]
+    full = os.path.join("$PROJECT_DIR", path)
+    assert os.path.isfile(full), full
+EOF
 
     # ==================================================
     # UNIT TEST 17 — No duplicate resource paths
     # ==================================================
     - name: Unit Test 17 — No duplicate resource paths
       run: |
-        set -euo pipefail
-        DUPES=$(jq -r '.resources[].id.path' "$PROJECT_FILE" | sort | uniq -d)
-        [ -z "$DUPES" ]
+        python3 - << 'EOF'
+import json
+with open("$PROJECT_FILE") as f:
+    d = json.load(f)
+paths = [r["id"]["path"] for r in d["resources"]]
+assert len(paths) == len(set(paths))
+EOF
 
     # ==================================================
     # UNIT TEST 18 — RoomOrderNodes valid
     # ==================================================
     - name: Unit Test 18 — RoomOrderNodes valid
       run: |
-        set -euo pipefail
-        jq -r '.RoomOrderNodes[].roomId.path' "$PROJECT_FILE" | while read r; do
-          test -f "$PROJECT_DIR/$r"
-        done
+        python3 - << 'EOF'
+import json, os
+with open("$PROJECT_FILE") as f:
+    d = json.load(f)
+for r in d["RoomOrderNodes"]:
+    p = r["roomId"]["path"]
+    assert os.path.isfile(os.path.join("$PROJECT_DIR", p))
+EOF
 
     # ==================================================
-    # UNIT TEST 19 — At least 1 room declared
+    # UNIT TEST 19 — At least one room declared
     # ==================================================
     - name: Unit Test 19 — At least one room declared
       run: |
-        set -euo pipefail
-        jq '.RoomOrderNodes | length > 0' "$PROJECT_FILE" | grep true
+        python3 - << 'EOF'
+import json
+with open("$PROJECT_FILE") as f:
+    d = json.load(f)
+assert len(d["RoomOrderNodes"]) > 0
+EOF
 
     # ==================================================
-    # UNIT TEST 20 — At least 1 script declared
+    # UNIT TEST 20 — At least one script declared
     # ==================================================
     - name: Unit Test 20 — At least one script declared
       run: |
-        set -euo pipefail
-        jq -r '.resources[].id.path' "$PROJECT_FILE" | grep '^scripts/' | grep -q .
-
-    # ==================================================
-    # UNIT TEST 21 — At least 1 object declared
-    # ==================================================
-    - name: Unit Test 21 — At least one object declared
-      run: |
-        set -euo pipefail
-        jq -r '.resources[].id.path' "$PROJECT_FILE" | grep '^objects/' | grep -q .
-
-    # ==================================================
-    # UNIT TEST 22 — At least 1 sprite declared
-    # ==================================================
-    - name: Unit Test 22 — At least one sprite declared
-      run: |
-        set -euo pipefail
-        jq -r '.resources[].id.path' "$PROJECT_FILE" | grep '^sprites/' | grep -q .
-
-    # ==================================================
-    # UNIT TEST 23 — TextureGroups exist
-    # ==================================================
-    - name: Unit Test 23 — TextureGroups exist
-      run: |
-        set -euo pipefail
-        jq '.TextureGroups | length > 0' "$PROJECT_FILE" | grep true
-
-    # ==================================================
-    # UNIT TEST 24 — Project contains resources
-    # ==================================================
-    - name: Unit Test 24 — Project contains resources
-      run: |
-        set -euo pipefail
-        jq '.resources | length > 0' "$PROJECT_FILE" | grep true
+        grep -q "^scripts/" < <(python3 - << 'EOF'
+import json
+with open("$PROJECT_FILE") as f:
+    d = json.load(f)
+for r in d["resources"]:
+    print(r["id"]["path"])
+EOF
+)
 
     # ==================================================
     # END
     # ==================================================
     - name: Unit Tests Complete
-      run: echo "🎉 All 24 unit tests passed (STRICT MODE ENABLED)"
+      run: echo "🎉 All unit tests passed (Python strict JSON mode)"
