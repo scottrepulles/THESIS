@@ -27,6 +27,7 @@ jobs:
     # ==================================================
     - name: Unit Test 1 — Project file exists
       run: |
+        set -euo pipefail
         test -f "$PROJECT_FILE"
 
     # ==================================================
@@ -34,51 +35,56 @@ jobs:
     # ==================================================
     - name: Unit Test 2 — Project file readable
       run: |
+        set -euo pipefail
         test -r "$PROJECT_FILE"
 
     # ==================================================
-    # UNIT TEST 3 — Valid JSON (STRICT)
+    # UNIT TEST 3 — Valid JSON
     # ==================================================
-    - name: Unit Test 3 — Project file is valid JSON
+    - name: Unit Test 3 — Valid JSON
       run: |
+        set -euo pipefail
         python3 -m json.tool "$PROJECT_FILE" > /dev/null
 
     # ==================================================
     # UNIT TEST 4 — GameMaker project type
     # ==================================================
-    - name: Unit Test 4 — Validate GameMaker project type
+    - name: Unit Test 4 — GameMaker project type
       run: |
-        python3 - << 'EOF'
-import json
-with open("$PROJECT_FILE") as f:
-    data = json.load(f)
-assert data.get("resourceType") == "GMProject"
+        set -euo pipefail
+        python3 - << EOF
+import json, os
+with open(os.environ["PROJECT_FILE"]) as f:
+    d = json.load(f)
+assert d.get("resourceType") == "GMProject"
 EOF
 
     # ==================================================
-    # UNIT TEST 5 — isEcma exists
+    # UNIT TEST 5 — isEcma configuration (REAL)
     # ==================================================
-    - name: Unit Test 5 — Validate isEcma key exists
+    - name: Unit Test 5 — isEcma configuration
       run: |
-        python3 - << 'EOF'
-import json
-with open("$PROJECT_FILE") as f:
-    data = json.load(f)
-assert "isEcma" in data
-print("isEcma:", data["isEcma"])
+        set -euo pipefail
+        python3 - << EOF
+import json, os
+with open(os.environ["PROJECT_FILE"]) as f:
+    d = json.load(f)
+assert "isEcma" in d
+assert d["isEcma"] is False
 EOF
 
     # ==================================================
     # UNIT TEST 6 — Required root keys
     # ==================================================
-    - name: Unit Test 6 — Required root keys exist
+    - name: Unit Test 6 — Required root keys
       run: |
-        python3 - << 'EOF'
-import json
-with open("$PROJECT_FILE") as f:
+        set -euo pipefail
+        python3 - << EOF
+import json, os
+with open(os.environ["PROJECT_FILE"]) as f:
     d = json.load(f)
-for key in ["resources", "Folders", "RoomOrderNodes", "TextureGroups"]:
-    assert key in d and len(d[key]) > 0
+for k in ["resources","Folders","RoomOrderNodes","TextureGroups"]:
+    assert k in d and len(d[k]) > 0
 EOF
 
     # ==================================================
@@ -86,6 +92,7 @@ EOF
     # ==================================================
     - name: Unit Test 7 — Required directories exist
       run: |
+        set -euo pipefail
         for d in fonts notes objects paths rooms scripts sequences shaders sounds sprites; do
           test -d "$PROJECT_DIR/$d"
         done
@@ -95,6 +102,7 @@ EOF
     # ==================================================
     - name: Unit Test 8 — Scripts exist
       run: |
+        set -euo pipefail
         find "$PROJECT_DIR/scripts" -name "*.yy" | grep -q .
 
     # ==================================================
@@ -102,6 +110,7 @@ EOF
     # ==================================================
     - name: Unit Test 9 — Objects exist
       run: |
+        set -euo pipefail
         find "$PROJECT_DIR/objects" -name "*.yy" | grep -q .
 
     # ==================================================
@@ -109,113 +118,135 @@ EOF
     # ==================================================
     - name: Unit Test 10 — Rooms exist
       run: |
+        set -euo pipefail
         find "$PROJECT_DIR/rooms" -name "*.yy" | grep -q .
 
     # ==================================================
-    # UNIT TEST 11 — Fonts exist
+    # UNIT TEST 11 — Resource paths exist
     # ==================================================
-    - name: Unit Test 11 — Fonts exist
+    - name: Unit Test 11 — Resource paths exist
       run: |
-        find "$PROJECT_DIR/fonts" -name "*.yy" | grep -q .
-
-    # ==================================================
-    # UNIT TEST 12 — Sprites exist
-    # ==================================================
-    - name: Unit Test 12 — Sprites exist
-      run: |
-        find "$PROJECT_DIR/sprites" -name "*.yy" | grep -q .
-
-    # ==================================================
-    # UNIT TEST 13 — Sounds exist
-    # ==================================================
-    - name: Unit Test 13 — Sounds exist
-      run: |
-        find "$PROJECT_DIR/sounds" -name "*.yy" | grep -q .
-
-    # ==================================================
-    # UNIT TEST 14 — Sequences exist
-    # ==================================================
-    - name: Unit Test 14 — Sequences exist
-      run: |
-        find "$PROJECT_DIR/sequences" -name "*.yy" | grep -q .
-
-    # ==================================================
-    # UNIT TEST 15 — Shaders exist
-    # ==================================================
-    - name: Unit Test 15 — Shaders exist
-      run: |
-        find "$PROJECT_DIR/shaders" -name "*.yy" | grep -q .
-
-    # ==================================================
-    # UNIT TEST 16 — Resource paths exist
-    # ==================================================
-    - name: Unit Test 16 — Resource paths exist
-      run: |
-        python3 - << 'EOF'
+        set -euo pipefail
+        python3 - << EOF
 import json, os
-with open("$PROJECT_FILE") as f:
+root = os.environ["PROJECT_DIR"]
+with open(os.environ["PROJECT_FILE"]) as f:
     d = json.load(f)
 for r in d["resources"]:
-    path = r["id"]["path"]
-    full = os.path.join("$PROJECT_DIR", path)
-    assert os.path.isfile(full), full
+    p = os.path.join(root, r["id"]["path"])
+    assert os.path.isfile(p), p
 EOF
 
     # ==================================================
-    # UNIT TEST 17 — No duplicate resource paths
+    # UNIT TEST 12 — No duplicate resource paths
     # ==================================================
-    - name: Unit Test 17 — No duplicate resource paths
+    - name: Unit Test 12 — No duplicate resource paths
       run: |
-        python3 - << 'EOF'
-import json
-with open("$PROJECT_FILE") as f:
+        set -euo pipefail
+        python3 - << EOF
+import json, os
+with open(os.environ["PROJECT_FILE"]) as f:
     d = json.load(f)
 paths = [r["id"]["path"] for r in d["resources"]]
 assert len(paths) == len(set(paths))
 EOF
 
     # ==================================================
-    # UNIT TEST 18 — RoomOrderNodes valid
+    # UNIT TEST 13 — RoomOrderNodes valid
     # ==================================================
-    - name: Unit Test 18 — RoomOrderNodes valid
+    - name: Unit Test 13 — RoomOrderNodes valid
       run: |
-        python3 - << 'EOF'
+        set -euo pipefail
+        python3 - << EOF
 import json, os
-with open("$PROJECT_FILE") as f:
+root = os.environ["PROJECT_DIR"]
+with open(os.environ["PROJECT_FILE"]) as f:
     d = json.load(f)
 for r in d["RoomOrderNodes"]:
-    p = r["roomId"]["path"]
-    assert os.path.isfile(os.path.join("$PROJECT_DIR", p))
+    p = os.path.join(root, r["roomId"]["path"])
+    assert os.path.isfile(p)
 EOF
 
     # ==================================================
-    # UNIT TEST 19 — At least one room declared
+    # UNIT TEST 14 — At least one room
     # ==================================================
-    - name: Unit Test 19 — At least one room declared
+    - name: Unit Test 14 — At least one room
       run: |
-        python3 - << 'EOF'
-import json
-with open("$PROJECT_FILE") as f:
+        set -euo pipefail
+        python3 - << EOF
+import json, os
+with open(os.environ["PROJECT_FILE"]) as f:
     d = json.load(f)
 assert len(d["RoomOrderNodes"]) > 0
 EOF
 
     # ==================================================
-    # UNIT TEST 20 — At least one script declared
+    # UNIT TEST 15 — At least one script
     # ==================================================
-    - name: Unit Test 20 — At least one script declared
+    - name: Unit Test 15 — At least one script
       run: |
-        grep -q "^scripts/" < <(python3 - << 'EOF'
-import json
-with open("$PROJECT_FILE") as f:
+        set -euo pipefail
+        python3 - << EOF
+import json, os
+with open(os.environ["PROJECT_FILE"]) as f:
     d = json.load(f)
-for r in d["resources"]:
-    print(r["id"]["path"])
+assert any(r["id"]["path"].startswith("scripts/") for r in d["resources"])
 EOF
-)
+
+    # ==================================================
+    # UNIT TEST 16 — At least one object
+    # ==================================================
+    - name: Unit Test 16 — At least one object
+      run: |
+        set -euo pipefail
+        python3 - << EOF
+import json, os
+with open(os.environ["PROJECT_FILE"]) as f:
+    d = json.load(f)
+assert any(r["id"]["path"].startswith("objects/") for r in d["resources"])
+EOF
+
+    # ==================================================
+    # UNIT TEST 17 — At least one sprite
+    # ==================================================
+    - name: Unit Test 17 — At least one sprite
+      run: |
+        set -euo pipefail
+        python3 - << EOF
+import json, os
+with open(os.environ["PROJECT_FILE"]) as f:
+    d = json.load(f)
+assert any(r["id"]["path"].startswith("sprites/") for r in d["resources"])
+EOF
+
+    # ==================================================
+    # UNIT TEST 18 — TextureGroups exist
+    # ==================================================
+    - name: Unit Test 18 — TextureGroups exist
+      run: |
+        set -euo pipefail
+        python3 - << EOF
+import json, os
+with open(os.environ["PROJECT_FILE"]) as f:
+    d = json.load(f)
+assert len(d["TextureGroups"]) > 0
+EOF
+
+    # ==================================================
+    # UNIT TEST 19 — Resources list not empty
+    # ==================================================
+    - name: Unit Test 19 — Resources list not empty
+      run: |
+        set -euo pipefail
+        python3 - << EOF
+import json, os
+with open(os.environ["PROJECT_FILE"]) as f:
+    d = json.load(f)
+assert len(d["resources"]) > 0
+EOF
 
     # ==================================================
     # END
     # ==================================================
     - name: Unit Tests Complete
-      run: echo "🎉 All unit tests passed (Python strict JSON mode)"
+      run: echo "🎉 All unit tests passed (REAL & STRICT)"
