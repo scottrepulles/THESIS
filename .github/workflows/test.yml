@@ -90,31 +90,34 @@ jobs:
         echo "✅ Required directories exist"
 
     # =============================
-    # UNIT TEST 7 — At least 1 script
+    # UNIT TEST 7 — Scripts exist (FIXED)
     # =============================
     - name: Unit Test 7 — Scripts exist
       run: |
-        ls "$PROJECT_DIR/scripts"/*.yy >/dev/null 2>&1
-        echo "✅ Scripts detected"
+        COUNT=$(find "$PROJECT_DIR/scripts" -type f -name "*.yy" | wc -l)
+        test "$COUNT" -gt 0
+        echo "✅ Scripts detected: $COUNT"
 
     # =============================
-    # UNIT TEST 8 — At least 1 room
+    # UNIT TEST 8 — Rooms exist
     # =============================
     - name: Unit Test 8 — Rooms exist
       run: |
-        ls "$PROJECT_DIR/rooms"/*.yy >/dev/null 2>&1
-        echo "✅ Rooms detected"
+        COUNT=$(find "$PROJECT_DIR/rooms" -type f -name "*.yy" | wc -l)
+        test "$COUNT" -gt 0
+        echo "✅ Rooms detected: $COUNT"
 
     # =============================
-    # UNIT TEST 9 — At least 1 object
+    # UNIT TEST 9 — Objects exist
     # =============================
     - name: Unit Test 9 — Objects exist
       run: |
-        ls "$PROJECT_DIR/objects"/*.yy >/dev/null 2>&1
-        echo "✅ Objects detected"
+        COUNT=$(find "$PROJECT_DIR/objects" -type f -name "*.yy" | wc -l)
+        test "$COUNT" -gt 0
+        echo "✅ Objects detected: $COUNT"
 
     # =============================
-    # UNIT TEST 10 — Resource paths exist
+    # UNIT TEST 10 — Resource paths valid
     # =============================
     - name: Unit Test 10 — Resource paths valid
       run: |
@@ -124,10 +127,10 @@ jobs:
           test -f "$PROJECT_DIR/$p" || exit 1
         done
 
-        echo "✅ Resource paths valid"
+        echo "✅ All resource paths valid"
 
     # =============================
-    # UNIT TEST 11 — RoomOrderNodes paths valid
+    # UNIT TEST 11 — RoomOrderNodes valid
     # =============================
     - name: Unit Test 11 — Room order valid
       run: |
@@ -141,47 +144,52 @@ jobs:
         echo "✅ Room order valid"
 
     # =============================
-    # UNIT TEST 12 — Audio assets exist
+    # UNIT TEST 12 — Fonts exist
     # =============================
-    - name: Unit Test 12 — Sounds exist
+    - name: Unit Test 12 — Fonts exist
       run: |
-        ls "$PROJECT_DIR/sounds"/*.yy >/dev/null 2>&1
-        echo "✅ Sound assets detected"
+        COUNT=$(find "$PROJECT_DIR/fonts" -type f -name "*.yy" | wc -l)
+        test "$COUNT" -gt 0
+        echo "✅ Fonts detected: $COUNT"
 
     # =============================
-    # UNIT TEST 13 — Sprite assets exist
+    # UNIT TEST 13 — Sprites exist
     # =============================
     - name: Unit Test 13 — Sprites exist
       run: |
-        ls "$PROJECT_DIR/sprites"/*.yy >/dev/null 2>&1
-        echo "✅ Sprite assets detected"
+        COUNT=$(find "$PROJECT_DIR/sprites" -type f -name "*.yy" | wc -l)
+        test "$COUNT" -gt 0
+        echo "✅ Sprites detected: $COUNT"
 
     # =============================
-    # UNIT TEST 14 — Shader assets exist
+    # UNIT TEST 14 — Sounds exist
     # =============================
-    - name: Unit Test 14 — Shaders exist
+    - name: Unit Test 14 — Sounds exist
       run: |
-        ls "$PROJECT_DIR/shaders"/*.yy >/dev/null 2>&1
-        echo "✅ Shader assets detected"
+        COUNT=$(find "$PROJECT_DIR/sounds" -type f -name "*.yy" | wc -l)
+        test "$COUNT" -gt 0
+        echo "✅ Sounds detected: $COUNT"
 
     # =============================
-    # UNIT TEST 15 — Sequence assets exist
+    # UNIT TEST 15 — Sequences exist
     # =============================
     - name: Unit Test 15 — Sequences exist
       run: |
-        ls "$PROJECT_DIR/sequences"/*.yy >/dev/null 2>&1
-        echo "✅ Sequence assets detected"
+        COUNT=$(find "$PROJECT_DIR/sequences" -type f -name "*.yy" | wc -l)
+        test "$COUNT" -gt 0
+        echo "✅ Sequences detected: $COUNT"
 
     # =============================
-    # UNIT TEST 16 — No empty resource paths
+    # UNIT TEST 16 — Shaders exist
     # =============================
-    - name: Unit Test 16 — No empty resource paths
+    - name: Unit Test 16 — Shaders exist
       run: |
-        grep '"path":""' "$PROJECT_FILE" && exit 1 || true
-        echo "✅ No empty resource paths"
+        COUNT=$(find "$PROJECT_DIR/shaders" -type f -name "*.yy" | wc -l)
+        test "$COUNT" -gt 0
+        echo "✅ Shaders detected: $COUNT"
 
     # =============================
-    # UNIT TEST 17 — Project name matches
+    # UNIT TEST 17 — Project name consistency
     # =============================
     - name: Unit Test 17 — Project name consistency
       run: |
@@ -191,7 +199,7 @@ jobs:
     # =============================
     # UNIT TEST 18 — Project not empty
     # =============================
-    - name: Unit Test 18 — Project not empty
+    - name: Unit Test 18 — Project contains resources
       run: |
         grep -q '"resources":\[' "$PROJECT_FILE"
         echo "✅ Project contains resources"
