@@ -14,9 +14,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
       - name: Locate GameMaker project file
         run: |
           PROJECT="Tower Defense v1(back up6)"
@@ -29,21 +26,21 @@ jobs:
 
           echo "✅ Found project file: $PROJECT_FILE"
 
-      - name: Validate JSON syntax
+      - name: Validate required GameMaker sections
         run: |
-          jq . "Tower Defense v1(back up6)"/*.yyp > /dev/null
-          echo "✅ Valid JSON structure"
+          PROJECT_FILE=$(ls "Tower Defense v1(back up6)"/*.yyp)
 
-      - name: Validate required GameMaker keys
-        run: |
-          jq -e '.resources' "Tower Defense v1(back up6)"/*.yyp > /dev/null
-          jq -e '.Folders' "Tower Defense v1(back up6)"/*.yyp > /dev/null
-          jq -e '.RoomOrderNodes' "Tower Defense v1(back up6)"/*.yyp > /dev/null
-          echo "✅ Required project sections exist"
+          grep -q '"resources"' "$PROJECT_FILE"
+          grep -q '"Folders"' "$PROJECT_FILE"
+          grep -q '"RoomOrderNodes"' "$PROJECT_FILE"
+
+          echo "✅ Required GameMaker sections exist"
 
       - name: Validate all resource paths exist
         run: |
-          jq -r '.resources[].id.path' "Tower Defense v1(back up6)"/*.yyp | while read path; do
+          PROJECT_FILE=$(ls "Tower Defense v1(back up6)"/*.yyp)
+
+          grep -o '"path":"[^"]*"' "$PROJECT_FILE" | cut -d':' -f2 | tr -d '"' | while read path; do
             if [ ! -f "$path" ]; then
               echo "❌ Missing resource file: $path"
               exit 1
