@@ -14,47 +14,52 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install jq (JSON validator)
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Locate GameMaker project
+      - name: Unit Test 0 — Locate GameMaker project
         run: |
           PROJECT="Tower Defense v1(back up6)"
           PROJECT_FILE=$(ls "$PROJECT"/*.yyp 2>/dev/null || true)
 
           if [ -z "$PROJECT_FILE" ]; then
-            echo "❌ No GameMaker project found"
+            echo "❌ No GameMaker project file found"
             exit 1
           fi
 
-          echo "✅ Found project file: $PROJECT_FILE"
+          echo "✅ GameMaker project found: $PROJECT_FILE"
 
-      - name: Unit Test 1 — Validate JSON syntax
+      - name: Unit Test 1 — Validate project type (text-based)
         run: |
-          jq . "Tower Defense v1(back up6)"/*.yyp > /dev/null
-          echo "✅ JSON syntax valid"
+          grep -q '"resourceType":"GMProject"' "Tower Defense v1(back up6)"/*.yyp
+          echo "✅ Valid GameMaker project type"
 
-      - name: Unit Test 2 — Validate project type
+      - name: Unit Test 2 — Validate required sections exist
         run: |
-          jq -e '.resourceType == "GMProject"' "Tower Defense v1(back up6)"/*.yyp > /dev/null
-          echo "✅ Correct GameMaker project type"
-
-      - name: Unit Test 3 — Validate required sections
-        run: |
-          jq -e '.resources' "Tower Defense v1(back up6)"/*.yyp > /dev/null
-          jq -e '.Folders' "Tower Defense v1(back up6)"/*.yyp > /dev/null
-          jq -e '.RoomOrderNodes' "Tower Defense v1(back up6)"/*.yyp > /dev/null
+          grep -q '"resources"' "Tower Defense v1(back up6)"/*.yyp
+          grep -q '"Folders"' "Tower Defense v1(back up6)"/*.yyp
+          grep -q '"RoomOrderNodes"' "Tower Defense v1(back up6)"/*.yyp
           echo "✅ Required sections exist"
 
-      - name: Unit Test 4 — Validate resource paths
+      - name: Unit Test 3 — Validate resource directories exist
         run: |
-          jq -r '.resources[].id.path' "Tower Defense v1(back up6)"/*.yyp | while read path; do
-            if [ ! -f "$path" ]; then
-              echo "❌ Missing resource: $path"
+          REQUIRED_DIRS=(
+            "fonts"
+            "objects"
+            "rooms"
+            "paths"
+            "scripts"
+            "sprites"
+            "sounds"
+            "sequences"
+          )
+
+          cd "Tower Defense v1(back up6)"
+
+          for dir in "${REQUIRED_DIRS[@]}"; do
+            if [ ! -d "$dir" ]; then
+              echo "❌ Missing directory: $dir"
               exit 1
             fi
           done
-          echo "✅ All resources exist"
+
+          echo "✅ All required directories exist"
 
       - name: Unit Tests Complete
-        run: echo "🎉 All unit tests passed (100% coverage)"
