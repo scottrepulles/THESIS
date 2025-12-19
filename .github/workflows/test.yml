@@ -1,4 +1,4 @@
-name: Unit Tests – Tower Defense
+name: Unit Tests – Tower Defense (GameMaker)
 
 on:
   push:
@@ -17,97 +17,123 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # -----------------------------
-      # UNIT TEST 0 — PROJECT EXISTS
-      # -----------------------------
-      - name: Unit Test 0 — Locate GameMaker project
-        run: |
-          PROJECT="Tower Defense v1(back up6)"
-          PROJECT_FILE=$(ls "$PROJECT"/*.yyp 2>/dev/null || true)
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
-          if [ -z "$PROJECT_FILE" ]; then
-            echo "❌ No GameMaker project file found"
+      - name: Define project paths
+        run: |
+          echo "PROJECT_DIR=Tower Defense v1(back up6)" >> $GITHUB_ENV
+          echo "PROJECT_FILE=Tower Defense v1(back up6)/Tower Defense v1(main).yyp" >> $GITHUB_ENV
+
+      # -----------------------------
+      # UNIT TEST 1 — PROJECT FILE EXISTS
+      # -----------------------------
+      - name: Unit Test 1 — Project file exists
+        run: |
+          if [ ! -f "$PROJECT_FILE" ]; then
+            echo "❌ Project file missing"
             exit 1
           fi
-
-          echo "✅ GameMaker project found: $PROJECT_FILE"
+          echo "✅ Project file found"
 
       # -----------------------------
-      # UNIT TEST 1 — FILE READABLE
+      # UNIT TEST 2 — VALID JSON
       # -----------------------------
-      - name: Unit Test 1 — Validate file is readable
+      - name: Unit Test 2 — Validate JSON syntax
         run: |
-          test -r "Tower Defense v1(back up6)"/*.yyp
-          echo "✅ Project file is readable"
+          jq . "$PROJECT_FILE" > /dev/null
+          echo "✅ Valid JSON"
 
       # -----------------------------
-      # UNIT TEST 2 — PROJECT TYPE
+      # UNIT TEST 3 — GAME MAKER PROJECT TYPE
       # -----------------------------
-      - name: Unit Test 2 — Validate project type
+      - name: Unit Test 3 — Validate GameMaker project type
         run: |
-          grep -q '"resourceType":"GMProject"' "Tower Defense v1(back up6)"/*.yyp
-          echo "✅ Valid GameMaker project type"
+          jq -e '.resourceType == "GMProject"' "$PROJECT_FILE" > /dev/null
+          echo "✅ Correct GameMaker project type"
 
       # -----------------------------
-      # UNIT TEST 3 — REQUIRED SECTIONS
+      # UNIT TEST 4 — REQUIRED ROOT KEYS
       # -----------------------------
-      - name: Unit Test 3 — Validate required sections
+      - name: Unit Test 4 — Required root keys exist
         run: |
-          grep -q '"resources"' "Tower Defense v1(back up6)"/*.yyp
-          grep -q '"Folders"' "Tower Defense v1(back up6)"/*.yyp
-          grep -q '"RoomOrderNodes"' "Tower Defense v1(back up6)"/*.yyp
-          echo "✅ Required sections exist"
+          jq -e '.resources' "$PROJECT_FILE" > /dev/null
+          jq -e '.Folders' "$PROJECT_FILE" > /dev/null
+          jq -e '.RoomOrderNodes' "$PROJECT_FILE" > /dev/null
+          jq -e '.TextureGroups' "$PROJECT_FILE" > /dev/null
+          echo "✅ Required root keys present"
 
       # -----------------------------
-      # UNIT TEST 4 — CONFIGURATION ASSERTION
+      # UNIT TEST 5 — CONFIGURATION LOGIC (FAILURE DEMO TEST)
       # -----------------------------
-      - name: Unit Test 4 — Validate isEcma configuration
+      - name: Unit Test 5 — Validate isEcma configuration
         run: |
-          FILE="Tower Defense v1(back up6)"/*.yyp
+          VALUE=$(jq '.isEcma' "$PROJECT_FILE")
 
-          # Check key existence
-          if ! grep -q '"isEcma"' "$FILE"; then
-            echo "❌ Test Failed: isEcma flag is missing"
-            exit 1
-          fi
-
-          VALUE=$(grep '"isEcma"' "$FILE" | head -n 1)
           echo "Detected isEcma value: $VALUE"
 
-          # Validate value
-          if echo "$VALUE" | grep -q 'true'; then
-            echo "❌ Test Failed: isEcma must be false for this project"
+          if [ "$VALUE" != "false" ]; then
+            echo "❌ isEcma must be false"
             exit 1
           fi
 
-          echo "✅ isEcma configuration is valid (false)"
+          echo "✅ isEcma configuration valid"
 
       # -----------------------------
-      # UNIT TEST 5 — REQUIRED DIRECTORIES
+      # UNIT TEST 6 — REQUIRED DIRECTORIES
       # -----------------------------
-      - name: Unit Test 5 — Validate required directories
+      - name: Unit Test 6 — Validate required directories
         run: |
-          cd "Tower Defense v1(back up6)"
-
           REQUIRED_DIRS=(
             fonts
+            notes
             objects
-            rooms
+            options
             paths
+            rooms
             scripts
-            sprites
-            sounds
             sequences
+            shaders
+            sounds
+            sprites
           )
 
           for dir in "${REQUIRED_DIRS[@]}"; do
-            if [ ! -d "$dir" ]; then
+            if [ ! -d "$PROJECT_DIR/$dir" ]; then
               echo "❌ Missing directory: $dir"
               exit 1
             fi
           done
 
           echo "✅ All required directories exist"
+
+      # -----------------------------
+      # UNIT TEST 7 — RESOURCE PATH INTEGRITY
+      # -----------------------------
+      - name: Unit Test 7 — Validate resource paths exist
+        run: |
+          jq -r '.resources[].id.path' "$PROJECT_FILE" | while read path; do
+            if [ ! -f "$PROJECT_DIR/$path" ]; then
+              echo "❌ Missing resource file: $path"
+              exit 1
+            fi
+          done
+
+          echo "✅ All resource paths valid"
+
+      # -----------------------------
+      # UNIT TEST 8 — ROOM ORDER VALIDATION
+      # -----------------------------
+      - name: Unit Test 8 — Room order references valid rooms
+        run: |
+          jq -r '.RoomOrderNodes[].roomId.path' "$PROJECT_FILE" | while read room; do
+            if [ ! -f "$PROJECT_DIR/$room" ]; then
+              echo "❌ Room order references missing room: $room"
+              exit 1
+            fi
+          done
+
+          echo "✅ Room order valid"
 
       # -----------------------------
       # END
